@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
         PeripheralManager peripheralManager = PeripheralManager.getInstance();
 
         try {
+            //Åbner PWM1 og sætter frikvensen til 50Hz
             servo = peripheralManager.openPwm(PWM_PIN);
             servo.setPwmFrequencyHz(50);
         } catch (IOException e) {
@@ -36,6 +37,7 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
+        //Ny timer med tidsplan til at køre metoden NextMove
         t = new Timer();
         t.scheduleAtFixedRate(new TimerTask() {
             @Override
