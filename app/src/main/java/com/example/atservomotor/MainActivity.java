@@ -1,23 +1,22 @@
 package com.example.atservomotor;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.things.pio.PeripheralManager;
 import com.google.android.things.pio.Pwm;
 
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
 //Toturial: http://myandroidthings.com/post/tutorial-10
 public class MainActivity extends Activity {
-
-    private static final String TAG = "MAT10";
+    private static final String TAG = "MAINACTIVITY";
     private static final String PWM_PIN = "PWM1";
-    private Pwm mPwm;
+    private Pwm servo;
     int i;
     Timer t;
 
@@ -27,12 +26,14 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         i = 0;
-        PeripheralManager pms = PeripheralManager.getInstance();
-        try {
-            mPwm = pms.openPwm(PWM_PIN);
-            mPwm.setPwmFrequencyHz(50);
-        } catch (Exception es) {
+        PeripheralManager peripheralManager = PeripheralManager.getInstance();
 
+        try {
+            servo = peripheralManager.openPwm(PWM_PIN);
+            servo.setPwmFrequencyHz(50);
+        } catch (IOException e) {
+            Log.e(TAG, "onCreate: ", e);
+            Toast.makeText(this, "ERROR: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
         t = new Timer();
@@ -44,46 +45,44 @@ public class MainActivity extends Activity {
         }, 0, 3000);
     }
 
+    //Finder næste vinkel som servo skal indtage
     private void NextMove() {
         switch (i % 3) {
             case 0:
-                Swing0Degree();
+                SwingDegree(2);
                 break;
             case 1:
-                Swing90Degree();
+                SwingDegree(7.5);
                 break;
             case 2:
-                Swing180Degree();
+                SwingDegree(12.5);
                 break;
         }
         i++;
     }
 
-    private void Swing0Degree() {
+    //Servo får en vis hældning ud fra antal ms den kører
+    private void SwingDegree(double inputInMs) {
         try {
-            mPwm.setPwmDutyCycle(2);
-            mPwm.setEnabled(true);
-            Log.e(TAG,"Swing0");
-        } catch (Exception ex) {
-
+            servo.setPwmDutyCycle(inputInMs);
+            servo.setEnabled(true);
+            Log.e(TAG,"Swing" + inputInMs);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private void Swing90Degree() {
-        try {
-            mPwm.setPwmDutyCycle(7.5);
-            Log.e(TAG,"Swing90");
-        } catch (Exception ex) {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
-        }
-    }
-
-    private void Swing180Degree() {
-        try {
-            mPwm.setPwmDutyCycle(12.5);
-            Log.e(TAG,"Swing180");
-        } catch (Exception ex) {
-
+        // Lukker for servo
+        if (servo != null) {
+            try {
+                servo.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Error on PeripheralIO API", e);
+            }
         }
     }
 }
